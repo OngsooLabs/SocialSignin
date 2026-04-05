@@ -1,0 +1,14 @@
+Copyright (c) 2026 Ongsoo (OSL). All rights reserved.
+
+This asset is governed by the standard Unity Asset Store End User License Agreement (EULA). 
+Please refer to the official Unity Asset Store EULA for the full terms of use:
+https://unity.com/legal/as_terms
+
+Under these terms, you are granted a non-exclusive license to use this asset in your personal or commercial Unity projects. 
+
+However, you strictly may NOT:
+1. Redistribute, share, sub-license, or sell this package or any of its contents (including C# scripts, Android .aar, and iOS .mm files) as a standalone product or as part of another Unity asset/template.
+2. Upload the contents of this package to a public repository (e.g., public GitHub) where others can download it freely.
+3. Decompile or reverse-engineer the compiled binaries to extract the proprietary core logic.
+
+This is NOT an open-source license. The source code and internal architecture remain the proprietary intellectual property of the author.
