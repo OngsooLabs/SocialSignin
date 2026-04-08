@@ -1,91 +1,137 @@
-# OSL Social Signin for Unity
+# OSL Social Sign-In for Unity
 
-A lightweight, cross-platform authentication plugin for Unity supporting Google and Apple Sign-In. This repository provides client-side token generation and backend server-side verification examples essential for production environments.
+A lightweight, cross-platform authentication plugin for Unity supporting Google, Facebook, and Apple Sign-In. This package provides a unified, easy-to-use C# interface (`ISignin`) and utilizes `ScriptableObject` settings to eliminate hardcoded credentials.
 
 ## Supported Platforms
 
-* Google: iOS, Android, WebGL, Standalone (PC)
-* Apple: iOS (Native Only)
+* **Google:** Android, iOS, WebGL, Standalone (PC / Windows)
+* **Facebook:** Android, iOS, WebGL *(Standalone PC is strictly not supported due to Meta's security policies)*
+* **Apple:** iOS (Native Only)
 
-> Note: Apple Sign-In on non-iOS platforms requires complex redirect servers. For maintainability and security, non-iOS platforms are not supported for Apple Sign-In. Use Google Sign-In instead.
+> **Note:** Apple Sign-In on non-iOS platforms requires complex redirect servers and domain verification. For security and maintainability, non-iOS platforms are not supported for Apple Sign-In.
+
+## Features
+
+* **No Hardcoding:** Manage all your Client IDs, App IDs, and Tokens cleanly through Unity's Inspector via `ScriptableObject` settings in the `Resources` folder.
+* **Automated Builds:** Custom `PreProcessBuild` and `PostProcessBuild` scripts automatically configure your Android `AndroidManifest.xml` / `.androidlib` and iOS Xcode `Info.plist`. Zero manual configuration is required.
+* **Unified Interface:** Switch between Google, Facebook, and Apple using the exact same `ISignin` methods and callbacks.
 
 ## Installation
 
-1. Open the Unity Editor and navigate to Window > Package Manager.
-2. Select My Assets from the top-left dropdown menu.
-3. Search for "OSL Social Signin", then click Download and Import.
-4. After importing, navigate to Assets > External Dependency Manager > Android Resolver > Force Resolve to fetch the required Android libraries.
-5. For iOS, the included XML dependency file will automatically generate the required Podfile and configure AuthenticationServices.framework when building the Xcode project.
+1. Open the Unity Editor and import the "OSL Social Sign-In" package.
+2. Navigate to **Assets > External Dependency Manager > Android Resolver > Force Resolve**. This is **mandatory** to fetch the required native Android SDKs (`.aar` files) for Google and Facebook.
+3. For iOS, simply build your project. The included automated scripts will automatically configure `AuthenticationServices.framework`, CocoaPods dependencies, and URL Schemes.
 
 ## Setup Guides
 
-Proper configuration of Client IDs and App settings is mandatory. Please refer to the detailed guides below before writing any code:
+Proper configuration of Client IDs and App settings is mandatory before writing any code.
 
-* [Google Sign-In Setup Guide](./Docs/Google_Guide.md)
-* [Apple Sign-In Setup Guide](./Docs/Apple_Guide.md)
+1. Create a folder named exactly `Resources` in your Unity project.
+2. Right-click inside the folder and navigate to **Create > OSL > Social** to create your settings files:
+   * `Google Auth Settings`
+   * `Facebook Auth Settings`
+   * `Apple Auth Settings`
+3. Enter your respective App IDs and Client Secrets in the Inspector.
 
 ## Quick Start
 
-Use the ISignin interface for a consistent implementation across providers.
+Use the `ISignin` interface for a consistent implementation across all providers.
 
-### Google Sign-In Example
+### 1. Google Sign-In Example
 
-    using UnityEngine;
-    using osl.social.signin.core;
-    using osl.social.signin.google;
+```csharp
+using UnityEngine;
+using osl.social.signin.core;
+using osl.social.signin.google;
 
-    public class GoogleAuthExample : MonoBehaviour
+public class GoogleAuthExample : MonoBehaviour
+{
+    private ISignin googleSignin;
+
+    void Start()
     {
-        private ISignin googleSignin;
+        // CRITICAL: Ensure the GameObject name exactly matches the native bridge target
+        gameObject.name = "GoogleSigninManager";
 
-        void Start()
-        {
-            googleSignin = new GoogleSignin();
-            googleSignin.OnSignInSuccess += (token) => Debug.Log("Token: " + token);
-            googleSignin.OnSignInFailed += (error) => Debug.LogError("Error: " + error);
+        googleSignin = new GoogleSignin();
+        googleSignin.OnSignInSuccess += (token) => Debug.Log("Google Token: " + token);
+        googleSignin.OnSignInFailed += (error) => Debug.LogError("Error: " + error);
 
-            // Initialize with Client ID (Client Secret is only for PC Standalone)
-            googleSignin.Init("YOUR_CLIENT_ID", "YOUR_CLIENT_SECRET");
-        }
-
-        public void Login() => googleSignin.SignIn();
+        // Automatically loads credentials from GoogleAuthSettings in the Resources folder
+        googleSignin.Init();
     }
 
-### Apple Sign-In Example (iOS Only)
+    public void Login() => googleSignin.SignIn();
+}
+```
 
-    using UnityEngine;
-    using osl.social.signin.core;
-    using osl.social.signin.apple;
+### 2. Facebook Sign-In Example
 
-    public class AppleAuthExample : MonoBehaviour
+```csharp
+using UnityEngine;
+using osl.social.signin.core;
+using osl.social.signin.facebook;
+
+public class FacebookAuthExample : MonoBehaviour
+{
+    private ISignin facebookSignin;
+
+    void Start()
     {
-        private ISignin appleSignin;
+        // CRITICAL: Ensure the GameObject name exactly matches the native bridge target
+        gameObject.name = "FacebookSigninManager";
 
-        void Start()
-        {
-            // CRITICAL: Ensure the GameObject name exactly matches "AppleSigninManager"
-            gameObject.name = "AppleSigninManager";
+        facebookSignin = new FacebookSignin();
+        facebookSignin.OnSignInSuccess += (token) => Debug.Log("Facebook Access Token: " + token);
+        facebookSignin.OnSignInFailed += (error) => Debug.LogError("Error: " + error);
 
-            appleSignin = gameObject.AddComponent<AppleSigninIOS>();
-            appleSignin.OnSignInSuccess += (token) => Debug.Log("JWT: " + token);
-            appleSignin.OnSignInFailed += (error) => Debug.LogError("Error: " + error);
-
-            // Initialize with your App Bundle ID
-            appleSignin.Init("com.yourcompany.yourgame");
-        }
-
-        public void Login() => appleSignin.SignIn();
+        // Automatically loads App ID & Client Token from FacebookAuthSettings
+        facebookSignin.Init();
     }
+
+    public void Login() => facebookSignin.SignIn();
+}
+```
+
+### 3. Apple Sign-In Example (iOS Only)
+
+```csharp
+using UnityEngine;
+using osl.social.signin.core;
+using osl.social.signin.apple;
+
+public class AppleAuthExample : MonoBehaviour
+{
+    private ISignin appleSignin;
+
+    void Start()
+    {
+        // CRITICAL: Ensure the GameObject name exactly matches the native bridge target
+        gameObject.name = "AppleSigninManager";
+
+        appleSignin = new AppleSignin();
+        appleSignin.OnSignInSuccess += (token) => Debug.Log("Apple JWT: " + token);
+        appleSignin.OnSignInFailed += (error) => Debug.LogError("Error: " + error);
+
+        // Automatically loads Service ID from AppleAuthSettings
+        appleSignin.Init();
+    }
+
+    public void Login() => appleSignin.SignIn();
+}
+```
 
 ## Backend Token Verification
 
-Never trust the tokens (ID Token, Access Token, JWT) sent directly from the Unity client. You must send these tokens to your backend server and verify their signatures. Relying solely on client-side authentication is a critical security risk.
+Never trust the tokens (ID Token, Access Token, JWT) sent directly from the Unity client. You must send these tokens to your backend server and verify their validity. Relying solely on client-side authentication is a critical security risk.
 
-* [Google Token Verification](./Backend/nodejs/google_verify.js)
-* [Apple Token Verification](./Backend/nodejs/apple_verify.js)
+* **Google:** Verify the ID Token via `google-auth-library` or `tokeninfo` endpoint.
+* **Facebook:** Verify the Access Token via Facebook's Graph API (`debug_token` endpoint).
+* **Apple:** Verify the JWT signature using Apple's public keys.
 
 ## Important Precautions
 
-1. GameObject Naming Convention (Apple): The iOS native bridge uses UnitySendMessage to route callbacks. You MUST attach the AppleSigninIOS component to a GameObject named exactly "AppleSigninManager".
-2. Silent Sign-In (Apple): Apple requires explicit user intent (via FaceID/TouchID). Calling SilentSignIn() will automatically redirect to the standard SignIn() UI prompt.
-3. User Profile Scope (Apple): Apple only provides the user's name and email on the very first successful sign-in. Subsequent sign-ins return the Identity Token only. Do not design your database to expect the email string on every login attempt.
+1. **GameObject Naming Convention (CRITICAL):** All native bridges (Android Java, iOS `.mm`, WebGL `.jslib`) use `UnitySendMessage` to route callbacks. You **MUST** name your GameObjects exactly as expected (e.g., `GoogleSigninManager`, `FacebookSigninManager`, `AppleSigninManager`).
+2. **Facebook WebGL HTTPS Requirement:** Facebook's JavaScript SDK strictly requires an `https://` secure connection. Running WebGL on a local `http://` server will result in Facebook blocking the login attempt.
+3. **Apple Silent Sign-In:** Apple requires explicit user intent (via FaceID/TouchID). Calling `SilentSignIn()` will automatically redirect to the standard `SignIn()` UI prompt.
+4. **Apple User Profile Scope:** Apple only provides the user's name and email on the *very first* successful sign-in. Subsequent sign-ins return the Identity Token only. Do not design your database to expect the email string on every login attempt.
